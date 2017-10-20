@@ -2119,6 +2119,14 @@ ENGINE_ERROR_CODE PassiveStream::processMutation(MutationResponse* mutation) {
         mutation->getItem()->setCas();
     }
 
+    Item* itm = mutation->getItem().get();
+    if (mcbp::datatype::is_snappy(itm->getDataType())) {
+        if (itm->decompressValue()) {
+            LOG(EXTENSION_LOG_WARNING,
+                "Failed to snappy uncompress a compressed value");
+        }
+    }
+
     ENGINE_ERROR_CODE ret;
     if (vb->isBackfillPhase()) {
         ret = engine->getKVBucket()->addBackfillItem(
